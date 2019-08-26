@@ -1,26 +1,93 @@
 import React from 'react';
-import logo from './logo.svg';
+import Component from 'react'
+// import logo from './logo.svg';
 import './App.css';
 
-function App() {
+class App extends React.Component {
+  constructor(props){
+    super(props);
+    
+    this.state = {
+      titles: {},
+      textboxes: {},
+      records: {},
+    };
+
+  }
+
+
+
+  render() {
+    return(
+
+
+    );
+  }
+}
+
+class Editor extends React.Component {
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    return (
+      
+    );
+  }
+
+}
+
+
+class Layout extends React.Component {
+  constructor(props){
+    super(props);
+  }
+
+  render(){
+    return (
+      <div className="half-pane">
+        { this.props.title }
+        { this.props.textbox }
+      </div>
+      
+      <div className="half-pane">
+        { this.props.playlist }
+      </div>
+    );
+  }
+
+}
+
+function Title(props) {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <h1 className="title" onClick={props.onClick}>
+      {props.text}
+    </h1>
   );
+}
+
+function Textbox(props) {
+  return (
+    <p className="textbox" onClick={props.onClick}>
+      {props.text}
+    </p>
+  );
+}
+
+// state for playhead?
+class Playlist extends React.Component {
+  constructor(props){
+    super(props)
+  }
+
+  render() {
+    return (
+      this.props.records.map((record) => 
+
+      );
+    );
+  }
 }
 
 export default App;

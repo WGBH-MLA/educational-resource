@@ -15,11 +15,12 @@ code {
 
 
 #editor.open {
-  background-color: #ff2;
+  background-color: #449;
+  color: #fff;
 }
 
 #viewer {
-  background-color: #f2f;
+  background-color: #fff;
 }
 
 .title {
@@ -38,11 +39,17 @@ code {
 /*layout*/
 
 .container {
+  height: 100vh;
   display: block;
   width: 100%;
 }
 
+.spacer {
+  padding: 10px;
+}
+
 .half-pane {
+  float: left;
   display: inline-block;
   min-width: 50%;
   width: 50%;

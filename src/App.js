@@ -15,17 +15,17 @@ class App extends React.Component {
       textboxes: {
         "5": {id: 5, text: 'This is a text box. And so it goes on and on.'}
       },
-      records: [
-        {id: 1, title: 'title1'},
-        {id: 2, title: 'title2'},
-        {id: 3, title: 'title3'},
-      ]
+      playlist_items: {
+        "6": {id: 1, title: 'title1', guid: 'cpb-aacip_37-97kps40n', in_time: 5, out_time: 8},
+        "7": {id: 2, title: 'title2', guid: 'cpb-aacip_37-20sqvcx0', in_time: 6, out_time: 9},
+        "8": {id: 3, title: 'title3', guid: 'cpb-aacip_507-gf0ms3kn9k', in_time: 7, out_time: 10},
+      }
     };
 
     this.handleChange = this.handleChange.bind(this);
+    this.handlePlaylistItemChange = this.handlePlaylistItemChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
-
 
   // for handling state of text inputs!
   handleChange(event, type) {
@@ -45,6 +45,18 @@ class App extends React.Component {
       })
     });
   }
+  
+  // generalized to take whichever field's achangin
+  handlePlaylistItemChange(event, id) {
+
+    // update just the key we wanna change
+    this.setState({playlist_items: update(this.state.playlist_items,
+        {[id]: 
+          {[event.target.name]: {$set: event.target.value }
+        }
+      })
+    });
+  }
 
   handleSubmit(event) {
     alert('wow!');
@@ -52,28 +64,33 @@ class App extends React.Component {
   }
 
   render() {
-    // console.log(this.state.records)
+    // console.log(this.state.playlist_items)
     return (
       <div className="container">
         <div id="editor" className="half-pane open">
-          <h2>Edit</h2>
-          
-          <Editor
-            handleChange={ this.handleChange }
-            titles={ this.state.titles }
-            textboxes={ this.state.textboxes }
-            records={ this.state.records }
-          />
+          <div className="spacer">
+            <h2>Edit</h2>
+            
+            <Editor
+              handleChange={ this.handleChange }
+              titles={ this.state.titles }
+              textboxes={ this.state.textboxes }
+              playlist_items={ this.state.playlist_items }
+            />
+          </div>
         </div>
 
         <div id="viewer" className="half-pane">
-          <h2>Preview</h2>
+          <div className="spacer">
+      
+            <h2>Preview</h2>
 
-          <Layout
-            title={ this.state.titles["4"] }
-            textbox={ this.state.textboxes["5"] }
-            records={ this.state.records }
-          />
+            <Layout
+              title={ this.state.titles["4"] }
+              textbox={ this.state.textboxes["5"] }
+              playlist_items={ this.state.playlist_items }
+            />
+          </div>
         </div>
       </div>
 
@@ -101,10 +118,25 @@ class Editor extends React.Component {
       </div>
     ); 
   }
+  
+  renderPlaylistItemEditor(id, text, guid, in_time, out_time) {
+   return (
+      <div key={ id }>
+        <label>Edit Playlist Item
+          <input id={ id } type="text" name="in" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
+          <input id={ id } type="text" name="out" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
+          <input id={ id } type="text" name="guid" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
+          <input id={ id } type="text" name="title" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
+
+        </label>
+      </div>
+    ); 
+  }
 
   render(){
     let title_editors;
     let textbox_editors;
+    let playlist_item_editors;
     
     let titles_keys = Object.keys(this.props.titles);
     if(titles_keys.length > 0){
@@ -114,6 +146,17 @@ class Editor extends React.Component {
     let textboxes_keys = Object.keys(this.props.textboxes);
     if(textboxes_keys.length > 0){
       textbox_editors = textboxes_keys.map((textbox_key, index) => this.renderTextboxEditor(this.props.textboxes[textbox_key].id, this.props.textboxes[textbox_key].text) )
+    }
+
+    let playlist_items_keys = Object.keys(this.props.playlist_items);
+    if(playlist_items_keys.length > 0){
+      playlist_item_editors = playlist_items_keys.map((playlist_item_key, index) => this.renderPlaylistItemEditor(
+        this.props.playlist_items[playlist_item_key].id,
+        this.props.playlist_items[playlist_item_key].text,
+        this.props.playlist_items[playlist_item_key].guid,
+        this.props.playlist_items[playlist_item_key].in_time,
+        this.props.playlist_items[playlist_item_key].out_time,
+      ) )
     }
 
     return (
@@ -126,6 +169,9 @@ class Editor extends React.Component {
           { textbox_editors }
         </div>
 
+        <div>
+          { playlist_item_editors }
+        </div>
       </div>
     );
   }
@@ -147,7 +193,7 @@ class Layout extends React.Component {
         </div>
         
         <div className="half-pane">
-          <Playlist records={ this.props.records } />;
+          <Playlist playlist_items={ this.props.playlist_items } />;
         </div>
       </div>
     );
@@ -177,19 +223,22 @@ class Playlist extends React.Component {
     super(props)
   }
 
-  renderPlaylistItem(record, key){
+  renderPlaylistItem(playlist_item, key){
     return (
-      <div id={ record.id } key={ key } className="playlist-item">
-        { record.title }
+      <div id={ playlist_item.id } key={ key } className="playlist-item">
+        { playlist_item.title } - 
+        { playlist_item.guid } - 
+        { playlist_item.in } - 
+        { playlist_item.out } - 
       </div>
     );
   }
 
   render() {
-
+    let playlist_items_keys = Object.keys(this.props.playlist_items);
     return (
       <div>
-        { this.props.records.map((record, index) => this.renderPlaylistItem(record, index) ) }
+        { playlist_items_keys.map((playlist_item_key, index) => this.renderPlaylistItem(this.props.playlist_items[playlist_item_key], index) ) }
       </div>
     );
   }

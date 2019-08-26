@@ -15,23 +15,35 @@ code {
 
 
 #editor.open {
-  
+  background-color: #ff2;
 }
 
 #viewer {
-
+  background-color: #f2f;
 }
 
 .title {
-  font-size: 18vh;
+  font-size: 3vh;
   font-weight: bold;
 }
 
 .textbox {
-  font-size: 12vh;
+  font-size: 2vh;
+}
+
+
+
+
+
+/*layout*/
+
+.container {
+  display: block;
+  width: 100%;
 }
 
 .half-pane {
+  display: inline-block;
   min-width: 50%;
   width: 50%;
   max-width: 50%;

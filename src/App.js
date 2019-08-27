@@ -1,5 +1,7 @@
 import React from 'react';
 // import logo from './logo.svg';
+import ReactDOM from 'react-dom';
+import {Editor, EditorState, RichUtils, convertToRaw} from 'draft-js';
 import update from 'immutability-helper';
 
 import './App.css';
@@ -110,7 +112,7 @@ class App extends React.Component {
             <div className="spacer">
               <h2>Edit</h2>
               
-              <Editor
+              <PageEditor
                 handleChange={ this.handleChange }
                 handlePlaylistItemChange={ this.handlePlaylistItemChange }
                 titles={ this.state.titles }
@@ -138,12 +140,62 @@ class App extends React.Component {
   }
 }
 
-class Editor extends React.Component {
+class BoxEditor extends React.Component {
+    constructor(props) {
+    super(props);
+    this.state = {editorState: EditorState.createEmpty()};
+    this.onChange = (editorState) => this.setState({editorState});
+  }
+
+  handleKeyCommand = (command) => {
+    const newState = RichUtils.handleKeyCommand(this.state.editorState, command)
+    if (newState) {
+        this.onChange(newState);
+        return 'handled';
+    }
+    return 'not-handled';
+  }
+
+  render() {
+    return (
+      <Editor
+        editorState={ this.state.editorState }
+        onChange={ this.onChange }
+        handleKeyCommand={ this.handleKeyCommand }
+      />
+    );
+  }
+}
+
+
+class PageEditor extends React.Component {
   constructor(props){
     super(props);
   }
 
   renderTitleEditor(id, title) {
+    // return (
+    //   <div key={ id }>
+    //     <label>
+    //       <div>
+    //         Edit Title { id }
+    //       </div>
+          
+    //       <div>
+          
+    //         <input
+    //           id={ id }
+    //           type="text"
+    //           placeholder={ 'title-' +id }
+    //           value={ this.props.titles[id].text }
+    //           onChange={ (e) => this.props.handleChange(e, 'titles') } 
+    //         />
+    //       </div>
+    //     </label>
+    //   </div>
+    // );
+
+
     return (
       <div key={ id }>
         <label>
@@ -151,15 +203,8 @@ class Editor extends React.Component {
             Edit Title { id }
           </div>
           
-          <div>
-          
-            <input
-              id={ id }
-              type="text"
-              placeholder={ 'title-' +id }
-              value={ this.props.titles[id].text }
-              onChange={ (e) => this.props.handleChange(e, 'titles') } 
-            />
+          <div className="edit-box">
+            <BoxEditor />
           </div>
         </label>
       </div>

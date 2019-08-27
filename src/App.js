@@ -16,10 +16,13 @@ class App extends React.Component {
         "5": {id: 5, text: 'This is a text box. And so it goes on and on.'}
       },
       playlist_items: {
-        "6": {id: 1, title: 'title1', guid: 'cpb-aacip_37-97kps40n', in_time: 5, out_time: 8},
-        "7": {id: 2, title: 'title2', guid: 'cpb-aacip_37-20sqvcx0', in_time: 6, out_time: 9},
-        "8": {id: 3, title: 'title3', guid: 'cpb-aacip_507-gf0ms3kn9k', in_time: 7, out_time: 10},
-      }
+        "1": {id: 1, title: 'title1', guid: 'cpb-aacip_37-97kps40n', in_time: 5, out_time: 8},
+        "2": {id: 2, title: 'title2', guid: 'cpb-aacip_37-20sqvcx0', in_time: 6, out_time: 9},
+        "3": {id: 3, title: 'title3', guid: 'cpb-aacip_507-gf0ms3kn9k', in_time: 7, out_time: 10},
+      },
+
+
+      editor_open: false
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -63,37 +66,74 @@ class App extends React.Component {
     event.preventDefault();
   }
 
+  toggleEditor() {
+    this.setState({editor_open: !this.state.editor_open })
+    console.log(this.state.editor_open)
+  }
+
+  paneClasses(element_name) {
+
+    let editor_open = this.state.editor_open;
+    let classes;
+    if(editor_open) {
+      classes = 'half-pane'
+    } else {
+      classes = element_name === 'editor' ? 'hidden' : 'full-pane';
+    }
+
+    return classes;
+  }
+
   render() {
     // console.log(this.state.playlist_items)
     return (
-      <div className="container">
-        <div id="editor" className="half-pane open">
+      <div>
+        <div id="menu-bar">
           <div className="spacer">
-            <h2>Edit</h2>
-            
-            <Editor
-              handleChange={ this.handleChange }
-              titles={ this.state.titles }
-              textboxes={ this.state.textboxes }
-              playlist_items={ this.state.playlist_items }
-            />
+            <button id="edit" onClick={ () => this.toggleEditor() } className="menu-item">
+              Edit
+            </button>
+
+            <button className="menu-item">
+              Save
+            </button>
+
+            <button className="menu-item">
+              thing
+            </button>
+
           </div>
         </div>
 
-        <div id="viewer" className="half-pane">
-          <div className="spacer">
-      
-            <h2>Preview</h2>
+        <div className="container">
+          <div id="editor" className={ this.paneClasses('editor') }>
+            <div className="spacer">
+              <h2>Edit</h2>
+              
+              <Editor
+                handleChange={ this.handleChange }
+                handlePlaylistItemChange={ this.handlePlaylistItemChange }
+                titles={ this.state.titles }
+                textboxes={ this.state.textboxes }
+                playlist_items={ this.state.playlist_items }
+              />
+            </div>
+          </div>
 
-            <Layout
-              title={ this.state.titles["4"] }
-              textbox={ this.state.textboxes["5"] }
-              playlist_items={ this.state.playlist_items }
-            />
+          <div id="viewer" className={ this.paneClasses('viewer') }>
+            <div className="spacer">
+        
+              <h2>Preview</h2>
+
+              <Layout
+                title={ this.state.titles["4"] }
+                textbox={ this.state.textboxes["5"] }
+                playlist_items={ this.state.playlist_items }
+              />
+            </div>
           </div>
         </div>
       </div>
-
     );
   }
 }
@@ -106,7 +146,22 @@ class Editor extends React.Component {
   renderTitleEditor(id, title) {
     return (
       <div key={ id }>
-        <label>Edit Title { id } <input id={ id } type="text" placeholder={ 'title-' +id } onChange={ (e) => this.props.handleChange(e, 'titles') } /></label>
+        <label>
+          <div>
+            Edit Title { id }
+          </div>
+          
+          <div>
+          
+            <input
+              id={ id }
+              type="text"
+              placeholder={ 'title-' +id }
+              value={ this.props.titles[id].text }
+              onChange={ (e) => this.props.handleChange(e, 'titles') } 
+            />
+          </div>
+        </label>
       </div>
     );
   }
@@ -114,7 +169,19 @@ class Editor extends React.Component {
   renderTextboxEditor(id, text) {
    return (
       <div key={ id }>
-        <label>Edit Textbox { id } <input id={ id } type="text" placeholder={ 'textbox-' +id } onChange={ (e) => this.props.handleChange(e, 'textboxes') } /></label>
+        <label>
+          <div>
+            Edit Textbox { id }
+          </div>
+          <div>
+            <input id={ id }
+              type="text"
+              placeholder={ 'textbox-' +id }
+              value={ this.props.textboxes[id].text }
+              onChange={ (e) => this.props.handleChange(e, 'textboxes') }
+            />
+          </div>
+        </label>
       </div>
     ); 
   }
@@ -122,11 +189,46 @@ class Editor extends React.Component {
   renderPlaylistItemEditor(id, text, guid, in_time, out_time) {
    return (
       <div key={ id }>
-        <label>Edit Playlist Item
-          <input id={ id } type="text" name="in" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
-          <input id={ id } type="text" name="out" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
-          <input id={ id } type="text" name="guid" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
-          <input id={ id } type="text" name="title" placeholder={ 'in-textbox-' +id } onChange={ (e) => this.props.handlePlaylistItemChange(e, id) } />
+        <label>
+          <div>
+            Edit Playlist Item { id }
+          </div>
+          
+          <div>
+            <input
+              id={ id }
+              type="text"
+              name="in_time"
+              placeholder={ 'in-' +id }
+              value={ this.props.playlist_items[id].in_time }
+              onChange={ (e) => this.props.handlePlaylistItemChange(e, id) }
+            />
+            <input
+              id={ id }
+              type="text"
+              name="out_time"
+              placeholder={ 'out-textbox-' +id }
+              value={ this.props.playlist_items[id].out_time }
+              onChange={ (e) => this.props.handlePlaylistItemChange(e, id) }
+            />
+            <input
+              id={ id }
+              type="text"
+              name="guid"
+              placeholder={ 'guid-textbox-' +id }
+              value={ this.props.playlist_items[id].guid }
+              onChange={ (e) => this.props.handlePlaylistItemChange(e, id) }
+            />
+            <input
+              id={ id }
+              type="text"
+              name="title"
+              placeholder={ 'title-textbox-' +id }
+              value={ this.props.playlist_items[id].title }
+              onChange={ (e) => this.props.handlePlaylistItemChange(e, id) }
+            />
+
+          </div>
 
         </label>
       </div>
@@ -148,9 +250,12 @@ class Editor extends React.Component {
       textbox_editors = textboxes_keys.map((textbox_key, index) => this.renderTextboxEditor(this.props.textboxes[textbox_key].id, this.props.textboxes[textbox_key].text) )
     }
 
+    console.log(this.props.playlist_items)
     let playlist_items_keys = Object.keys(this.props.playlist_items);
+    console.log(playlist_items_keys)
     if(playlist_items_keys.length > 0){
-      playlist_item_editors = playlist_items_keys.map((playlist_item_key, index) => this.renderPlaylistItemEditor(
+        
+      playlist_item_editors = playlist_items_keys.map((playlist_item_key) => this.renderPlaylistItemEditor(        
         this.props.playlist_items[playlist_item_key].id,
         this.props.playlist_items[playlist_item_key].text,
         this.props.playlist_items[playlist_item_key].guid,
@@ -175,9 +280,7 @@ class Editor extends React.Component {
       </div>
     );
   }
-
 }
-
 
 class Layout extends React.Component {
   constructor(props){
@@ -226,16 +329,31 @@ class Playlist extends React.Component {
   renderPlaylistItem(playlist_item, key){
     return (
       <div id={ playlist_item.id } key={ key } className="playlist-item">
-        { playlist_item.title } - 
-        { playlist_item.guid } - 
-        { playlist_item.in } - 
-        { playlist_item.out } - 
+        <div className="playlist-item-row">
+          <h3>
+            { playlist_item.title }
+          </h3>
+        </div>
+
+        <div className="playlist-item-row">
+          
+          <span className="playlist-item-guid">
+            { playlist_item.guid }
+          </span>
+
+          <span className="playlist-item-inout">
+            { playlist_item.in_time } - 
+            { playlist_item.out_time }
+          </span>
+
+        </div>
       </div>
     );
   }
 
   render() {
     let playlist_items_keys = Object.keys(this.props.playlist_items);
+    console.log(playlist_items_keys)
     return (
       <div>
         { playlist_items_keys.map((playlist_item_key, index) => this.renderPlaylistItem(this.props.playlist_items[playlist_item_key], index) ) }

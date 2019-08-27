@@ -17,6 +17,10 @@ body, h3 {
   margin: 0;
 }
 
+h1, h3 {
+  font-weight: normal;
+}
+
 #menu-bar {
   background-color: #eee;
   width: 100%;

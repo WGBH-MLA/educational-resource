@@ -1,10 +1,18 @@
 import React from 'react';
 // import logo from './logo.svg';
 import ReactDOM from 'react-dom';
+
 import {Editor, EditorState, RichUtils, convertToRaw} from 'draft-js';
+import {stateToHTML} from 'draft-js-export-html';
+
 import update from 'immutability-helper';
 
 import './App.css';
+
+function createMarkup(html) {
+  return {__html: html};
+}
+
 
 class App extends React.Component {
   constructor(props){
@@ -30,6 +38,8 @@ class App extends React.Component {
     this.handleChange = this.handleChange.bind(this);
     this.handlePlaylistItemChange = this.handlePlaylistItemChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+
+    this.showPreview = this.showPreview.bind(this);
   }
 
   // for handling state of text inputs!
@@ -86,6 +96,18 @@ class App extends React.Component {
     return classes;
   }
 
+  showPreview(id, html) {
+    console.log(id)
+    console.log(html)
+    this.setState({titles: update(this.state.titles,
+        {[id]: 
+          {text: {$set: html }
+        }
+      })
+    });
+
+  }
+
   render() {
     // console.log(this.state.playlist_items)
     return (
@@ -118,6 +140,8 @@ class App extends React.Component {
                 titles={ this.state.titles }
                 textboxes={ this.state.textboxes }
                 playlist_items={ this.state.playlist_items }
+
+                showPreview={ this.showPreview }
               />
             </div>
           </div>
@@ -144,7 +168,18 @@ class BoxEditor extends React.Component {
     constructor(props) {
     super(props);
     this.state = {editorState: EditorState.createEmpty()};
-    this.onChange = (editorState) => this.setState({editorState});
+    // this.onChange = (editorState) => this.setState({editorState});
+    this.onChange = (editorState) => {
+
+      this.setState({editorState}, () => {
+        // this fires after setstate has compelted
+        this.props.showPreview( this.props.object_id, this.getPreview(this.props.object_id) );  
+
+        return true;
+
+      });
+      
+    };
   }
 
   handleKeyCommand = (command) => {
@@ -156,13 +191,22 @@ class BoxEditor extends React.Component {
     return 'not-handled';
   }
 
+  getPreview(id) {
+    let contentState = this.state.editorState.getCurrentContent();
+    let html = stateToHTML(contentState);
+    return html;
+  }
+
   render() {
     return (
-      <Editor
-        editorState={ this.state.editorState }
-        onChange={ this.onChange }
-        handleKeyCommand={ this.handleKeyCommand }
-      />
+      <div>
+        <Editor
+          editorState={ this.state.editorState }
+          onChange={ this.onChange }
+          // onKeyUp={ () => this.props.showPreview( this.getPreview(this.props.object_id) ) }
+          handleKeyCommand={ this.handleKeyCommand }
+        />
+      </div>
     );
   }
 }
@@ -204,7 +248,10 @@ class PageEditor extends React.Component {
           </div>
           
           <div className="edit-box">
-            <BoxEditor />
+            <BoxEditor
+              object_id={ id }
+              showPreview={ this.props.showPreview }
+            />
           </div>
         </label>
       </div>
@@ -336,8 +383,14 @@ class Layout extends React.Component {
     return (
       <div className="container">
         <div className="half-pane">
-          <Title id={ this.props.title.id } text={ this.props.title.text } />
-          <Textbox id={ this.props.textbox.id } text={ this.props.textbox.text } />
+          <Title
+            id={ this.props.title.id }
+            text={ this.props.title.text }
+          />
+          <Textbox
+            id={ this.props.textbox.id }
+            text={ this.props.textbox.text }
+          />
         </div>
         
         <div className="half-pane">
@@ -351,9 +404,8 @@ class Layout extends React.Component {
 
 function Title(props) {
   return (
-    <h1 className="title" onClick={props.onClick}>
-      { props.text }
-    </h1>
+    // lol!
+    <h1 className="title" onClick={props.onClick} dangerouslySetInnerHTML={ createMarkup(props.text) } />
   );
 }
 

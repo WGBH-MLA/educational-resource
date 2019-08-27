@@ -96,10 +96,10 @@ class App extends React.Component {
     return classes;
   }
 
-  showPreview(id, html) {
+  showPreview(id, html, box_type) {
     console.log(id)
     console.log(html)
-    this.setState({titles: update(this.state.titles,
+    this.setState({[box_type]: update(this.state[box_type],
         {[id]: 
           {text: {$set: html }
         }
@@ -173,7 +173,7 @@ class BoxEditor extends React.Component {
 
       this.setState({editorState}, () => {
         // this fires after setstate has compelted
-        this.props.showPreview( this.props.object_id, this.getPreview(this.props.object_id) );  
+        this.props.showPreview( this.props.object_id, this.getPreview(this.props.object_id), this.props.box_type );  
 
         return true;
 
@@ -250,6 +250,7 @@ class PageEditor extends React.Component {
           <div className="edit-box">
             <BoxEditor
               object_id={ id }
+              box_type={ 'titles' }
               showPreview={ this.props.showPreview }
             />
           </div>
@@ -259,23 +260,42 @@ class PageEditor extends React.Component {
   }
   
   renderTextboxEditor(id, text) {
-   return (
+   // return (
+   //    <div key={ id }>
+   //      <label>
+   //        <div>
+   //          Edit Textbox { id }
+   //        </div>
+   //        <div>
+   //          <input id={ id }
+   //            type="text"
+   //            placeholder={ 'textbox-' +id }
+   //            value={ this.props.textboxes[id].text }
+   //            onChange={ (e) => this.props.handleChange(e, 'textboxes') }
+   //          />
+   //        </div>
+   //      </label>
+   //    </div>
+   //  ); 
+
+    return (
       <div key={ id }>
         <label>
           <div>
             Edit Textbox { id }
           </div>
-          <div>
-            <input id={ id }
-              type="text"
-              placeholder={ 'textbox-' +id }
-              value={ this.props.textboxes[id].text }
-              onChange={ (e) => this.props.handleChange(e, 'textboxes') }
+          
+          <div className="edit-box">
+            <BoxEditor
+              object_id={ id }
+              box_type={ 'textboxes' }
+              showPreview={ this.props.showPreview }
             />
           </div>
         </label>
       </div>
-    ); 
+    );
+
   }
   
   renderPlaylistItemEditor(id, text, guid, in_time, out_time) {
@@ -411,9 +431,7 @@ function Title(props) {
 
 function Textbox(props) {
   return (
-    <p className="textbox" onClick={props.onClick}>
-      { props.text }
-    </p>
+    <p className="textbox" onClick={props.onClick} dangerouslySetInnerHTML={ createMarkup(props.text) } />
   );
 }
 

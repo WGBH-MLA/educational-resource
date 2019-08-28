@@ -2,7 +2,7 @@ import React from 'react';
 // import logo from './logo.svg';
 import ReactDOM from 'react-dom';
 
-import {Editor, EditorState, RichUtils, convertToRaw, convertFromRaw} from 'draft-js';
+import {Editor, EditorState, ContentState, RichUtils, convertToRaw, convertFromRaw} from 'draft-js';
 import {stateToHTML} from 'draft-js-export-html';
 
 import update from 'immutability-helper';
@@ -14,6 +14,7 @@ import './App.css';
 
 let TITLE_BOXTYPE = 1;
 let TEXTBOX_BOXTYPE = 2;
+let PLAYLISTITEM_BOXTYPE = 3;
 
 function createMarkup(html) {
   return {__html: html};
@@ -52,32 +53,31 @@ class App extends React.Component {
     this.handlePlaylistItemChange = this.handlePlaylistItemChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
 
-    this.showPreview = this.showPreview.bind(this);
+    // this.showPreview = this.showPreview.bind(this);
     this.saveEditorState = this.saveEditorState.bind(this);
 
     this.loadProject = this.loadProject.bind(this);
     this.loadBox = this.loadBox.bind(this);
 
     // load whatever we got
-    // this.loadProject(1);
+    this.loadProject(1);
   }
 
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   console.log(this.state)
-  //   return true;
-  //   // if( this.state.titles !== nextState.titles || this.state.textboxes !== nextState.textboxes || this.state.playlist_items !== nextState.playlist_items) {
-  //   //   return true;
-  //   // } else {
-  //   //   return false;
-  //   // }
-  // }
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log(this.state)
+    if(this.state.editor_open !== nextState.editor_open || this.state.titles !== nextState.titles || this.state.textboxes !== nextState.textboxes || this.state.playlist_items !== nextState.playlist_items) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   newProject() {
-    console.log("hello")
+    // console.log("hello")
     // delete everythign and get new elements
     axios.get('http://localhost:3001/init_project').then( (resp) => {
-      console.log('got that dang newproject ' + resp.status)
-      console.log(resp)
+      // console.log('got that dang newproject ' + resp.status)
+      // console.log(resp)
 
       this.setState({titles: {}, textboxes: {}, playlist_items: {}});
       this.loadProject(1);
@@ -86,14 +86,14 @@ class App extends React.Component {
 
   loadProject(id) {
     axios.get('http://localhost:3001/project/'+id).then( (resp) => {
-      console.log('got that dang loadproject ' + resp.status)
-      console.log(resp)
+      // console.log('got that dang loadproject ' + resp.status)
+      // console.log(resp)
 
       let box_ids = resp.data;
-      console.log(box_ids)
+      // console.log(box_ids)
       if(!box_ids) box_ids = [];
 
-      // needs arrow to presever this behavior inside this block!
+      // needs arrow to preserve 'this.' behavior inside this block!
       box_ids.forEach( (box_id) => {
         this.loadBox(box_id);
       });
@@ -105,24 +105,49 @@ class App extends React.Component {
     let textboxes = this.state.textboxes;
     
     // how u struckchur
-    // let playlist_items = this.state.playlist_items;
+    let playlist_items = this.state.playlist_items;
 
-    Object.keys(titles).forEach(function(title_id, index) {
+    Object.keys(titles).forEach((title_id, index) => {
       this.saveBox(TITLE_BOXTYPE, title_id, titles[title_id].data, titles[title_id].text);
     });
 
-    Object.keys(textboxes).forEach(function(textbox_id, index) {
+    Object.keys(textboxes).forEach((textbox_id, index) => {
       this.saveBox(TEXTBOX_BOXTYPE, textbox_id, textboxes[textbox_id].data, textboxes[textbox_id].text);
+    });
+
+
+    // THIS IS UGLY, SOOOOORRY!
+    Object.keys(playlist_items).forEach((playlist_items_id, index) => {
+      let pl_data = playlist_items[playlist_items_id].text + ';;;' + playlist_items[playlist_items_id].guid + ';;;' + playlist_items[playlist_items_id].in_time + ';;;' + playlist_items[playlist_items_id].out_time;
+      this.saveBox(PLAYLISTITEM_BOXTYPE, playlist_items_id, pl_data, '');
     });
   }
 
   loadBox(id) {
-    console.log(id+"i tried!")
+    // console.log(id+"i tried!")
     axios.get('http://localhost:3001/boxes/'+id).then( (resp) => {
       console.log('got that dang loadbox ' + resp.status)
       console.log(resp)
       let box = resp.data;
-      let type = box.box_type === TITLE_BOXTYPE ? 'titles' : 'textboxes';
+      let type;
+      if(box.box_type === TITLE_BOXTYPE){
+        type = 'titles'
+      } else if(box.box_type === TEXTBOX_BOXTYPE){
+        type = 'textboxes'
+      } else {
+        type = 'playlist_items'
+
+        // Horrible, bad
+        let data_array = box.data.split(';;;');
+        box.text = data_array[0] 
+        box.guid = data_array[1]
+        box.in_time = data_array[2]
+        box.out_time = data_array[3]
+      }
+
+      // console.log('box was' + id)
+      // console.log(box)
+
       this.setState({[type]: update(this.state[type],
           {[id]: {$set: box } } )
       });
@@ -131,18 +156,23 @@ class App extends React.Component {
   }
 
   saveBox(box_type, id, data, text) {
+    // turn editorstate into a scrang
+    console.log('DATA WA THIS ')
+    console.log(data)
+    // let json_data = JSON.stringify(data);
+
     if(id){
-      
+
       axios.patch('http://localhost:3001/boxes/'+id, {box_type: box_type, data: data, text: text}).then( (resp) => {
-        console.log('got that dang response ' + resp.status)
-        console.log(resp)
+        // console.log('got that dang updatebox ' + resp.status)
+        // console.log(resp)
       });
 
     } else {
       // this will only get called when initializing the project...
       axios.post('http://localhost:3001/boxes', {box_type: box_type, data: data, text: text}).then( (resp) => {
-        console.log('got that dang response ' + resp.status)
-        console.log(resp)
+        // console.log('got that dang createbox ' + resp.status)
+        // console.log(resp)
       });
     }
   }
@@ -185,7 +215,7 @@ class App extends React.Component {
 
   toggleEditor() {
     this.setState({editor_open: !this.state.editor_open })
-    console.log(this.state.editor_open)
+    // console.log(this.state.editor_open)
   }
 
   paneClasses(element_name) {
@@ -201,31 +231,34 @@ class App extends React.Component {
     return classes;
   }
 
-  saveEditorState(id, json_data, box_type) {
-    console.log('Save Editor Staet: ')
-    console.log(id)
-    console.log(json_data)
+  saveEditorState(id, json_data, box_type, html) {
+    // console.log('Save Editor Staet: ')
+    // console.log(id)
+    // console.log(json_data)
+
     this.setState({[box_type]: update(this.state[box_type],
-        {[id]: 
-          {data: {$set: json_data }
+      {[id]: 
+        {
+          data: {$set: json_data },
+          text: {$set: html}
         }
       })
     });
   
   }
 
-  showPreview(id, html, box_type) {
-    console.log('Show Preview: ')
-    console.log(id)
-    console.log(html)
-    this.setState({[box_type]: update(this.state[box_type],
-        {[id]: 
-          {text: {$set: html }
-        }
-      })
-    });
+  // showPreview(id, html, box_type) {
+  //   // console.log('Show Preview: ')
+  //   // console.log(id)
+  //   // console.log(html)
+  //   this.setState({[box_type]: update(this.state[box_type],
+  //       {[id]: 
+  //         {text: {$set: html }
+  //       }
+  //     })
+  //   });
 
-  }
+  // }
 
   render() {
     // console.log(this.state.playlist_items)
@@ -254,7 +287,7 @@ class App extends React.Component {
               Edit
             </button>
 
-            <button className="menu-item">
+            <button id="save" onClick={ () => this.saveProject() } className="menu-item">
               Save
             </button>
           </div>
@@ -297,8 +330,18 @@ class BoxEditor extends React.Component {
     super(props);
 
     let editor_data;
-    if (this.props.data) {
-      editor_data = EditorState.createWithContent(convertFromRaw(this.props.data))
+    if (this.props.data && this.props.data.length > 0) {
+      console.log(this.props.data)
+      let json_data = JSON.parse(this.props.data)
+      console.log(json_data)
+
+      let content_state = convertFromRaw(json_data);
+      // let block_array = convertFromRaw( json_data )
+      // let contentstate = ContentState.createFromBlockArray(block_array)
+      // let converted_state = convertFromRaw(JSON.parse(this.props.data));
+      // let contentstate = converted_state.getCurrentContent();
+
+      editor_data = EditorState.createWithContent( content_state );
     } else {
       editor_data = EditorState.createEmpty();
     }
@@ -311,10 +354,15 @@ class BoxEditor extends React.Component {
 
         // this block fires after setstate has compelted
         let contentState = this.state.editorState.getCurrentContent();
+
         // grab current state of editor
-        this.props.saveEditorState( this.props.object_id, this.getEditorData(contentState), this.props.box_type );  
+        let editor_json = this.getEditorData(contentState);
+
         // grab current output of editor
-        this.props.showPreview( this.props.object_id, this.getPreview(contentState), this.props.box_type );  
+        let html = this.getPreview(contentState);
+
+        this.props.saveEditorState( this.props.object_id, editor_json, this.props.box_type, html );  
+        // this.props.showPreview( this.props.object_id, this.getPreview(contentState), this.props.box_type );  
         return true;
       });
       
@@ -382,6 +430,8 @@ class PageEditor extends React.Component {
     let title_data;
     if(this.props.titles[id]) {
       title_data = this.props.titles[id].data
+      // console.log('titledata')
+      // console.log(title_data)
     }
 
     return (
@@ -429,6 +479,8 @@ class PageEditor extends React.Component {
     let textbox_data;
     if(this.props.textboxes[id]) {
       textbox_data = this.props.textboxes[id].data
+      // console.log('textboxdata')
+      // console.log(this.props.textboxes[id])
     }
 
     return (
@@ -491,9 +543,9 @@ class PageEditor extends React.Component {
             <input
               id={ id }
               type="text"
-              name="title"
-              placeholder={ 'title-textbox-' +id }
-              value={ this.props.playlist_items[id].title }
+              name="text"
+              placeholder={ 'text-textbox-' +id }
+              value={ this.props.playlist_items[id].text }
               onChange={ (e) => this.props.handlePlaylistItemChange(e, id) }
             />
 
@@ -519,9 +571,9 @@ class PageEditor extends React.Component {
       textbox_editors = textboxes_keys.map((textbox_key, index) => this.renderTextboxEditor(this.props.textboxes[textbox_key].id, this.props.textboxes[textbox_key].text) )
     }
 
-    console.log(this.props.playlist_items)
+    // console.log(this.props.playlist_items)
     let playlist_items_keys = Object.keys(this.props.playlist_items);
-    console.log(playlist_items_keys)
+    // console.log(playlist_items_keys)
     if(playlist_items_keys.length > 0){
         
       playlist_item_editors = playlist_items_keys.map((playlist_item_key) => this.renderPlaylistItemEditor(        
@@ -618,7 +670,7 @@ class Playlist extends React.Component {
       <div id={ playlist_item.id } key={ key } className="playlist-item">
         <div className="playlist-item-row">
           <h3>
-            { playlist_item.title }
+            { playlist_item.text }
           </h3>
         </div>
 
@@ -640,7 +692,7 @@ class Playlist extends React.Component {
 
   render() {
     let playlist_items_keys = Object.keys(this.props.playlist_items);
-    console.log(playlist_items_keys)
+    // console.log(playlist_items_keys)
     return (
       <div>
         { playlist_items_keys.map((playlist_item_key, index) => this.renderPlaylistItem(this.props.playlist_items[playlist_item_key], index) ) }
@@ -653,7 +705,7 @@ class VideoPlayer extends React.Component {
   componentDidMount() {
     // instantiate Video.js
     this.player = videojs(this.videoNode, this.props, function onPlayerReady() {
-      console.log('onPlayerReady', this)
+      // console.log('onPlayerReady', this)
     });
   }
 

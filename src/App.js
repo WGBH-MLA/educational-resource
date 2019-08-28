@@ -46,7 +46,9 @@ class App extends React.Component {
       titles: {},
       textboxes: {},
       playlist_items: {},
-      editor_open: false
+      
+      editor_open: false,
+      now_playing_video_src: null
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -59,13 +61,15 @@ class App extends React.Component {
     this.loadProject = this.loadProject.bind(this);
     this.loadBox = this.loadBox.bind(this);
 
+    this.playVideo = this.playVideo.bind(this);
+
     // load whatever we got
     this.loadProject(1);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    console.log(this.state)
-    if(this.state.editor_open !== nextState.editor_open || this.state.titles !== nextState.titles || this.state.textboxes !== nextState.textboxes || this.state.playlist_items !== nextState.playlist_items) {
+
+    if(this.state.now_playing_video_src !== nextState.now_playing_video_src || this.state.editor_open !== nextState.editor_open || this.state.titles !== nextState.titles || this.state.textboxes !== nextState.textboxes || this.state.playlist_items !== nextState.playlist_items) {
       return true;
     } else {
       return false;
@@ -247,6 +251,10 @@ class App extends React.Component {
   
   }
 
+  playVideo(src) {
+    this.setState({now_playing_video_src: src});
+  }
+
   // showPreview(id, html, box_type) {
   //   // console.log('Show Preview: ')
   //   // console.log(id)
@@ -270,6 +278,8 @@ class App extends React.Component {
           title={ Object.entries(this.state.titles)[0][1] }
           textbox={ Object.entries(this.state.textboxes)[0][1] }
           playlist_items={ this.state.playlist_items }
+          now_playing_video_src={ this.state.now_playing_video_src }
+          playVideo={ this.playVideo }
         />
       );
     }
@@ -609,16 +619,23 @@ class Layout extends React.Component {
   }
 
   render(){
-    const videoJsOptions = {
-      autoplay: false,
-      controls: true,
-      sources: [{
-        src: 'https://avalon-mediacache-test.s3.amazonaws.com/anamorphTEST.mp4',
-        type: 'video/mp4'
-      }]
-    }
 
     let template = '';
+
+    let video_player;
+    if(this.props.now_playing_video_src){
+      const videoJsOptions = {
+        autoplay: false,
+        controls: true,
+        sources: [{
+          src: this.props.now_playing_video_src,
+          type: 'video/mp4'
+        }]
+      }
+      video_player = (
+        <VideoPlayer { ...videoJsOptions } />
+      );
+    }
 
     if(this.props.title && this.props.title.id){
       template = (
@@ -635,8 +652,8 @@ class Layout extends React.Component {
           </div>
           
           <div className="half-pane">
-            <VideoPlayer { ...videoJsOptions } />
-            <Playlist playlist_items={ this.props.playlist_items } />;
+            { video_player }
+            <Playlist playVideo={ this.props.playVideo } playlist_items={ this.props.playlist_items } />;
           </div>
         </div>
       );
@@ -663,11 +680,12 @@ function Textbox(props) {
 class Playlist extends React.Component {
   constructor(props){
     super(props)
+    this.renderPlaylistItem = this.renderPlaylistItem.bind(this);
   }
 
   renderPlaylistItem(playlist_item, key){
     return (
-      <div id={ playlist_item.id } key={ key } className="playlist-item">
+      <div id={ playlist_item.id } key={ key } onClick={ () => this.props.playVideo(playlist_item.guid) } className="playlist-item">
         <div className="playlist-item-row">
           <h3>
             { playlist_item.text }
@@ -681,8 +699,7 @@ class Playlist extends React.Component {
           </span>
 
           <span className="playlist-item-inout">
-            { playlist_item.in_time } - 
-            { playlist_item.out_time }
+            { playlist_item.in_time } - { playlist_item.out_time }
           </span>
 
         </div>

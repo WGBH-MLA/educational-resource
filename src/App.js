@@ -55,7 +55,6 @@ class App extends React.Component {
     this.handlePlaylistItemChange = this.handlePlaylistItemChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
 
-    // this.showPreview = this.showPreview.bind(this);
     this.saveEditorState = this.saveEditorState.bind(this);
 
     this.loadProject = this.loadProject.bind(this);
@@ -119,8 +118,7 @@ class App extends React.Component {
       this.saveBox(TEXTBOX_BOXTYPE, textbox_id, textboxes[textbox_id].data, textboxes[textbox_id].text);
     });
 
-
-    // THIS IS UGLY, SOOOOORRY!
+    // THIS IS UGLY
     Object.keys(playlist_items).forEach((playlist_items_id, index) => {
       let pl_data = playlist_items[playlist_items_id].text + ';;;' + playlist_items[playlist_items_id].guid + ';;;' + playlist_items[playlist_items_id].in_time + ';;;' + playlist_items[playlist_items_id].out_time;
       this.saveBox(PLAYLISTITEM_BOXTYPE, playlist_items_id, pl_data, '');
@@ -141,7 +139,7 @@ class App extends React.Component {
       } else {
         type = 'playlist_items'
 
-        // Horrible, bad
+        // bad
         let data_array = box.data.split(';;;');
         box.text = data_array[0] 
         box.guid = data_array[1]
@@ -163,7 +161,6 @@ class App extends React.Component {
     // turn editorstate into a scrang
     console.log('DATA WA THIS ')
     console.log(data)
-    // let json_data = JSON.stringify(data);
 
     if(id){
 
@@ -255,19 +252,6 @@ class App extends React.Component {
     this.setState({now_playing_video_src: src});
   }
 
-  // showPreview(id, html, box_type) {
-  //   // console.log('Show Preview: ')
-  //   // console.log(id)
-  //   // console.log(html)
-  //   this.setState({[box_type]: update(this.state[box_type],
-  //       {[id]: 
-  //         {text: {$set: html }
-  //       }
-  //     })
-  //   });
-
-  // }
-
   render() {
     // console.log(this.state.playlist_items)
 
@@ -315,7 +299,6 @@ class App extends React.Component {
                 textboxes={ this.state.textboxes }
                 playlist_items={ this.state.playlist_items }
 
-                showPreview={ this.showPreview }
                 saveEditorState={ this.saveEditorState }
               />
             </div>
@@ -346,11 +329,6 @@ class BoxEditor extends React.Component {
       console.log(json_data)
 
       let content_state = convertFromRaw(json_data);
-      // let block_array = convertFromRaw( json_data )
-      // let contentstate = ContentState.createFromBlockArray(block_array)
-      // let converted_state = convertFromRaw(JSON.parse(this.props.data));
-      // let contentstate = converted_state.getCurrentContent();
-
       editor_data = EditorState.createWithContent( content_state );
     } else {
       editor_data = EditorState.createEmpty();
@@ -372,7 +350,6 @@ class BoxEditor extends React.Component {
         let html = this.getPreview(contentState);
 
         this.props.saveEditorState( this.props.object_id, editor_json, this.props.box_type, html );  
-        // this.props.showPreview( this.props.object_id, this.getPreview(contentState), this.props.box_type );  
         return true;
       });
       
@@ -399,7 +376,7 @@ class BoxEditor extends React.Component {
   _onClick = (e) => {
       this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, e.target.name));
   }
-  
+
   render() {
 
     const styles = ['BOLD', 'ITALIC', 'UNDERLINE', 'CODE'];
@@ -409,9 +386,6 @@ class BoxEditor extends React.Component {
 
     return (
       <div>
-        <div className='toolbar'>
-          {buttons}
-        </div>
         <Editor
           editorState={ this.state.editorState }
           onChange={ this.onChange }
@@ -471,7 +445,6 @@ class PageEditor extends React.Component {
 
               box_type={ 'titles' }
 
-              showPreview={ this.props.showPreview }
               saveEditorState={ this.props.saveEditorState }
             />
           </div>
@@ -520,14 +493,12 @@ class PageEditor extends React.Component {
 
               box_type={ 'textboxes' }
 
-              showPreview={ this.props.showPreview }
               saveEditorState={ this.props.saveEditorState }
             />
           </div>
         </label>
       </div>
     );
-
   }
   
   renderPlaylistItemEditor(id, text, guid, in_time, out_time) {
@@ -573,7 +544,6 @@ class PageEditor extends React.Component {
             />
 
           </div>
-
         </label>
       </div>
     ); 
@@ -594,9 +564,7 @@ class PageEditor extends React.Component {
       textbox_editors = textboxes_keys.map((textbox_key, index) => this.renderTextboxEditor(this.props.textboxes[textbox_key].id, this.props.textboxes[textbox_key].text) )
     }
 
-    // console.log(this.props.playlist_items)
     let playlist_items_keys = Object.keys(this.props.playlist_items);
-    // console.log(playlist_items_keys)
     if(playlist_items_keys.length > 0){
         
       playlist_item_editors = playlist_items_keys.map((playlist_item_key) => this.renderPlaylistItemEditor(        
@@ -671,9 +639,9 @@ class Layout extends React.Component {
         </div>
       );
     }
+
     return template;
   }
-
 }
 
 function Title(props) {
@@ -689,7 +657,7 @@ function Textbox(props) {
   );
 }
 
-// state for playhead?
+// state for playhead to give videojs?
 class Playlist extends React.Component {
   constructor(props){
     super(props)

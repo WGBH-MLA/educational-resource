@@ -396,9 +396,22 @@ class BoxEditor extends React.Component {
     return JSON.stringify(convertToRaw(content));
   }
 
+  _onClick = (e) => {
+      this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, e.target.name));
+  }
+  
   render() {
+
+    const styles = ['BOLD', 'ITALIC', 'UNDERLINE', 'CODE'];
+    const buttons = styles.map(style => {
+      return <button key={style} onClick={this._onClick} name={style}>{style}</button>
+    });
+
     return (
       <div>
+        <div className='toolbar'>
+          {buttons}
+        </div>
         <Editor
           editorState={ this.state.editorState }
           onChange={ this.onChange }
@@ -451,7 +464,7 @@ class PageEditor extends React.Component {
             Edit Title { id }
           </div>
           
-          <div className="edit-box">
+          <div className="title edit-box">
             <BoxEditor
               object_id={ id }
               data={ title_data }
@@ -500,7 +513,7 @@ class PageEditor extends React.Component {
             Edit Textbox { id }
           </div>
           
-          <div className="edit-box">
+          <div className="textbox edit-box">
             <BoxEditor
               object_id={ id }
               data={ textbox_data }
@@ -684,8 +697,9 @@ class Playlist extends React.Component {
   }
 
   renderPlaylistItem(playlist_item, key){
+    let src_url = 'https://www.americanarchive.org/media/' + playlist_item.guid;
     return (
-      <div id={ playlist_item.id } key={ key } onClick={ () => this.props.playVideo(playlist_item.guid) } className="playlist-item">
+      <div id={ playlist_item.id } key={ key } onClick={ () => this.props.playVideo(src_url) } className="playlist-item">
         <div className="playlist-item-row">
           <h3>
             { playlist_item.text }
@@ -746,7 +760,5 @@ class VideoPlayer extends React.Component {
     )
   }
 }
-
-
 
 export default App;
